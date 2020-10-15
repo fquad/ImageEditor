@@ -1,18 +1,17 @@
 package com.example.imagegallery;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
@@ -40,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     Button tool;
     Button save;
 
+    boolean dark_theme = false;
+
     TextView toolName;
 
     SeekBar seekbar;
@@ -62,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
 
-
         //GUI element initialisation
         imageView = findViewById(R.id.imageView);
 
@@ -80,6 +80,9 @@ public class MainActivity extends AppCompatActivity {
         ImageButton tool3 = findViewById(R.id.btn_tool3);
         ImageButton tool4 = findViewById(R.id.btn_tool4);
 
+        ImageButton theme = findViewById(R.id.btn_theme);
+
+
         Button back = findViewById(R.id.btn_back);
         Button reset = findViewById(R.id.btn_reset);
 
@@ -95,6 +98,8 @@ public class MainActivity extends AppCompatActivity {
         tool2.setOnClickListener((v) -> tool2ButtonClicked());
         tool3.setOnClickListener((v) -> tool3ButtonClicked());
         tool4.setOnClickListener((v) -> tool4ButtonClicked());
+
+        theme.setOnClickListener((v) -> themeButtonClicked());
 
         //seekbar Event handling
         seekbar = findViewById(R.id.seekBar);
@@ -172,6 +177,7 @@ public class MainActivity extends AppCompatActivity {
         getImageFromGallery();
     }
 
+
     private void toolsButtonClicked(){
         //Show and Hide tool buttons
         if(!toolBarOpen){
@@ -243,6 +249,16 @@ public class MainActivity extends AppCompatActivity {
         toolName.setText("tool4");
         toolMenu.setVisibility(View.VISIBLE);
         currentTool = 4;
+    }
+
+    private void themeButtonClicked(){
+        if(dark_theme) {
+            dark_theme = false;
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }else{
+            dark_theme = true;
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
     }
 
     private void showToolbar(){

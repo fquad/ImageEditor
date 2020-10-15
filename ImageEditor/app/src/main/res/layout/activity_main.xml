@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#CC000000"
+    android:background="@color/colorPrimary"
     tools:context=".MainActivity">
 
     <FrameLayout
@@ -23,8 +23,9 @@
             android:id="@+id/imageView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:cropToPadding="true"
             android:layout_gravity="center_horizontal|center_vertical"
+            android:background="@color/colorPrimary"
+            android:cropToPadding="true"
             app:srcCompat="@drawable/antu_insert_image_svg__1184x1184" />
     </FrameLayout>
 
@@ -35,6 +36,7 @@
         android:layout_marginStart="5dp"
         android:layout_marginTop="20dp"
         android:layout_marginEnd="5dp"
+        android:background="@color/colorPrimary"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,30 +47,44 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:backgroundTint="#FFFFFF"
-            android:text="Open" />
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:text="Open"
+            android:textColor="@color/colorPrimary" />
 
         <Button
             android:id="@+id/btn_edit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:backgroundTint="#FFFFFF"
-            android:text="Edit" />
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:text="Edit"
+            android:textColor="@color/colorPrimary" />
 
         <Button
             android:id="@+id/btn_save"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:backgroundTint="#FFFFFF"
-            android:text="Save" />
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:text="Save"
+            android:textColor="@color/colorPrimary" />
+
+        <ImageButton
+            android:id="@+id/btn_theme"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:backgroundTint="@color/colorPrimaryDark"
+            android:tint="@color/colorPrimary"
+            app:srcCompat="@drawable/ic_theme" />
+
     </LinearLayout>
 
     <LinearLayout
         android:id="@+id/toolbar"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="@color/colorPrimary"
         android:orientation="horizontal"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -110,6 +126,7 @@
         android:id="@+id/toolMenu"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:background="@color/colorPrimary"
         android:orientation="vertical"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -124,14 +141,14 @@
             android:layout_height="wrap_content"
             android:text="TextView"
             android:textAlignment="center"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/colorPrimaryDark"
             android:textSize="18sp" />
 
         <SeekBar
             android:id="@+id/seekBar"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:backgroundTint="#FFFFFF"
+            android:backgroundTint="@color/colorPrimaryDark"
             android:progressTint="#CF3232" />
 
         <LinearLayout
