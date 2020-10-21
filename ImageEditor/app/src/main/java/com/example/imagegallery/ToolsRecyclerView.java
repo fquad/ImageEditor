@@ -1,23 +1,27 @@
+package com.example.imagegallery;
+
 import android.content.Context;
+import android.graphics.drawable.Icon;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.ImageButton;
 
+import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.imagegallery.R;
 
 import java.util.List;
 
 public class ToolsRecyclerView extends RecyclerView.Adapter<ToolsRecyclerView.ViewHolder> {
 
-    private List<String> mData;
+    private List<Integer> mData;
     private LayoutInflater mInflater;
     private ItemClickListener mClickListener;
 
     // data is passed into the constructor
-    ToolsRecyclerView(Context context, List<String> data) {
+    ToolsRecyclerView(Context context, List<Integer> data) {
         this.mInflater = LayoutInflater.from(context);
         this.mData = data;
     }
@@ -30,10 +34,11 @@ public class ToolsRecyclerView extends RecyclerView.Adapter<ToolsRecyclerView.Vi
     }
 
     // binds the data to the TextView in each row
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        String animal = mData.get(position);
-        holder.myTextView.setText(animal);
+        int iconId = mData.get(position);
+        holder.myBtn.setImageResource(iconId);
     }
 
     // total number of rows
@@ -44,25 +49,24 @@ public class ToolsRecyclerView extends RecyclerView.Adapter<ToolsRecyclerView.Vi
 
 
     // stores and recycles views as they are scrolled off screen
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView myTextView;
+    public class ViewHolder extends RecyclerView.ViewHolder{
+        ImageButton myBtn;
 
         ViewHolder(View itemView) {
             super(itemView);
-            myTextView = itemView.findViewById(R.id.tvAnimalName);
-            itemView.setOnClickListener(this);
+            myBtn = itemView.findViewById(R.id.btn_tool);
+            myBtn.setOnClickListener((v) -> onClick());
         }
 
-        @Override
-        public void onClick(View view) {
-            if (mClickListener != null) mClickListener.onItemClick(view, getAdapterPosition());
+        public void onClick() {
+            if (mClickListener != null) mClickListener.onItemClick(getAdapterPosition());
         }
     }
 
     // convenience method for getting data at click position
-    String getItem(int id) {
+    /* getItem(int id) {
         return mData.get(id);
-    }
+    }*/
 
     // allows clicks events to be caught
     void setClickListener(ItemClickListener itemClickListener) {
@@ -71,6 +75,6 @@ public class ToolsRecyclerView extends RecyclerView.Adapter<ToolsRecyclerView.Vi
 
     // parent activity will implement this method to respond to click events
     public interface ItemClickListener {
-        void onItemClick(View view, int position);
+        void onItemClick(int position);
     }
 }

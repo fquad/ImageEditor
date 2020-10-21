@@ -1,17 +1,31 @@
 package com.example.imagegallery;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.Display;
 import android.view.View;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
@@ -21,33 +35,47 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.ArrayList;
+
+public class MainActivity extends AppCompatActivity implements ToolsRecyclerView.ItemClickListener{
+
+    private static final int PERMISSION_CODE = 1000;
+    private static final int IMAGE_CAPTURE_CODE = 1001;
 
     private static final int GALLERY_REQUEST = 9;
+
     private ImageView imageView;
 
     boolean toolBarOpen = false;
 
     int currentTool = 0;
-    Bitmap originalImg;
 
     LinearLayout toolbar;
     LinearLayout toolMenu;
 
+    ImageFilter img = null;
+
     Button open;
     Button tool;
-    Button save;
+    ImageButton save;
+    ImageButton btnCamera;
+    ImageButton noFilter;
 
-    boolean dark_theme = false;
+    Uri image_uri;
+
+    ToolsRecyclerView toolsAdapter;
+
+    boolean dark_theme = true;
+    boolean toggle_original = false;
+    int filterApplied = 0;
 
     TextView toolName;
 
     SeekBar seekbar;
 
-    float contrast = 1;
-    float brightness = 0;
-
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +90,21 @@ public class MainActivity extends AppCompatActivity {
                 | View.SYSTEM_UI_FLAG_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 
+        //recycler view setup
+        ArrayList<Integer> toolsIcon =  new ArrayList<>();
+        toolsIcon.add(R.drawable.ic_brightness);
+        toolsIcon.add(R.drawable.ico_contrast);
+        toolsIcon.add(R.drawable.ico_sepia);
+        toolsIcon.add(R.drawable.ico_gray);
+        toolsIcon.add(R.drawable.ic_action_name);
+        toolsIcon.add(R.drawable.ic_action_name);
+        toolsIcon.add(R.drawable.ic_action_name);
+
+        RecyclerView recyclerView = findViewById(R.id.toolsRV);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this,RecyclerView.HORIZONTAL,false));
+        toolsAdapter = new ToolsRecyclerView(this, toolsIcon);
+        toolsAdapter.setClickListener(this);
+        recyclerView.setAdapter(toolsAdapter);
 
         //GUI element initialisation
         imageView = findViewById(R.id.imageView);
@@ -72,33 +115,22 @@ public class MainActivity extends AppCompatActivity {
         open = findViewById(R.id.btn_open);
         tool = findViewById(R.id.btn_edit);
         save = findViewById(R.id.btn_save);
-
+        noFilter = findViewById(R.id.btn_noFilter);
         toolName = findViewById(R.id.toolName);
-
-        ImageButton tool1 = findViewById(R.id.btn_tool1);
-        ImageButton tool2 = findViewById(R.id.btn_tool2);
-        ImageButton tool3 = findViewById(R.id.btn_tool3);
-        ImageButton tool4 = findViewById(R.id.btn_tool4);
+        btnCamera = findViewById(R.id.btn_camera);
 
         ImageButton theme = findViewById(R.id.btn_theme);
 
-
         Button back = findViewById(R.id.btn_back);
-        Button reset = findViewById(R.id.btn_reset);
+
 
         //GUI listener
+        btnCamera.setOnClickListener((v) -> getImageFromCamera());
         open.setOnClickListener((v) -> openButtonClicked());
         tool.setOnClickListener((v) -> toolsButtonClicked());
         save.setOnClickListener((v) -> saveButtonClicked());
-
+        noFilter.setOnClickListener((v) -> noFilterButtonClicked());
         back.setOnClickListener((v) -> backButtonClicked());
-        reset.setOnClickListener((v) -> resetButtonClicked());
-
-        tool1.setOnClickListener((v) -> tool1ButtonClicked());
-        tool2.setOnClickListener((v) -> tool2ButtonClicked());
-        tool3.setOnClickListener((v) -> tool3ButtonClicked());
-        tool4.setOnClickListener((v) -> tool4ButtonClicked());
-
         theme.setOnClickListener((v) -> themeButtonClicked());
 
         //seekbar Event handling
@@ -106,14 +138,10 @@ public class MainActivity extends AppCompatActivity {
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
 
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                // TODO Auto-generated method stub
-            }
+            public void onStopTrackingTouch(SeekBar seekBar) { }
 
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-                // TODO Auto-generated method stub
-            }
+            public void onStartTrackingTouch(SeekBar seekBar) { }
 
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress,boolean fromUser) {
@@ -121,53 +149,28 @@ public class MainActivity extends AppCompatActivity {
                 int i = seekbar.getProgress();
                 switch (currentTool){
                     case 1:
-                        contrast = (float)(i * 0.1);
-                        imageView.setImageBitmap(changeBitmapContrastBrightness(originalImg, contrast, brightness));
+                        img.setContrast((float)(i * 0.1));
                         break;
                     case 2:
-                        brightness = (float)(i*5.1 - 255.0);
-                        imageView.setImageBitmap(changeBitmapContrastBrightness(originalImg, contrast, brightness));
+                        img.setBrightness((float)(i*5.1 - 255.0));
                         break;
-                    case 3:
 
-                        break;
-                    case 4:
-
-                        break;
                 }
+                toggle_original = false;
+
+                if(filterApplied > 0) {
+                    imageView.setImageBitmap(img.withFilter);
+                }else {
+                    imageView.setImageBitmap(img.noFilter);
+                }
+
             }
         });
-
-
     }
 
-    /**
-     *
-     * @param bmp input bitmap
-     * @param contrast 0..10 1 is default
-     * @param brightness -255..255 0 is default
-     * @return new bitmap
-     */
-    private Bitmap changeBitmapContrastBrightness(Bitmap bmp, float contrast, float brightness)
-    {
-        ColorMatrix cm = new ColorMatrix(new float[]
-                {
-                        contrast, 0, 0, 0, brightness,
-                        0, contrast, 0, 0, brightness,
-                        0, 0, contrast, 0, brightness,
-                        0, 0, 0, 1, 0
-                });
 
-        Bitmap ret = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());
 
-        Canvas canvas = new Canvas(ret);
 
-        Paint paint = new Paint();
-        paint.setColorFilter(new ColorMatrixColorFilter(cm));
-        canvas.drawBitmap(bmp, 0, 0, paint);
-
-        return ret;
-    }
 
     private void saveButtonClicked(){
         saveImageToGallery();
@@ -176,7 +179,6 @@ public class MainActivity extends AppCompatActivity {
     private void openButtonClicked(){
         getImageFromGallery();
     }
-
 
     private void toolsButtonClicked(){
         //Show and Hide tool buttons
@@ -202,53 +204,69 @@ public class MainActivity extends AppCompatActivity {
         currentTool = 0;
     }
 
-    private void resetButtonClicked(){
-        imageView.setImageBitmap(originalImg);
-        switch (currentTool){
-            case 1:
-                    contrast = 1;
-                    seekbar.setProgress((int)contrast*10);
-                break;
-            case 2:
-                    brightness = 0;
-                    seekbar.setProgress((int)((brightness+255)/5.1));
-                break;
-            case 3:
-
-                break;
-            case 4:
-                break;
+    private void noFilterButtonClicked(){
+        if(img != null) {
+            if (!toggle_original) {
+                imageView.setImageBitmap(img.original);
+            } else {
+                imageView.setImageBitmap(img.withFilter);
+            }
         }
+        toggle_original = !toggle_original;
+
     }
 
-    private void tool1ButtonClicked(){
-        hideToolbar();
-        toolName.setText("contrast");
-        seekbar.setProgress((int)contrast*10);
-        toolMenu.setVisibility(View.VISIBLE);
-        currentTool = 1;
-    }
+    //Recycler view Button Click event
+    @Override
+    public void onItemClick( int position) {
+        if(toolbar.getVisibility() == View.VISIBLE) {
+            switch (position) {
+                case 0:
+                    hideToolbar();
+                    toolName.setText("contrast");
+                    seekbar.setVisibility(View.VISIBLE);
+                    seekbar.setProgress((int) img.getContrast() * 10);
+                    currentTool = 1;
+                    toolMenu.setVisibility(View.VISIBLE);
+                    break;
+                case 1:
+                    hideToolbar();
+                    toolName.setText("brightness");
+                    seekbar.setVisibility(View.VISIBLE);
+                    seekbar.setProgress((int) ((img.getBrightness() + 255) / 5.1));
+                    currentTool = 2;
+                    toolMenu.setVisibility(View.VISIBLE);
+                    break;
+                case 2:
+                    if(filterApplied != 1) {
+                        img.sephia();
+                        imageView.setImageBitmap(img.withFilter);
+                        filterApplied = 1;
+                        break;
+                    }
+                    if(filterApplied == 1){
+                        imageView.setImageBitmap(img.noFilter);
+                        filterApplied = 0;
+                    }
+                    break;
+                case 3:
+                    if(filterApplied != 2) {
+                        img.gray();
+                        imageView.setImageBitmap(img.withFilter);
+                        filterApplied = 2;
+                        break;
+                    }
+                    if(filterApplied == 2){
+                        imageView.setImageBitmap(img.noFilter);
+                        filterApplied = 0;
+                    }
+                    break;
+                default:
+                    currentTool = 0;
+                    break;
+            }
 
-    private void tool2ButtonClicked(){
-        hideToolbar();
-        toolName.setText("brightness");
-        seekbar.setProgress((int)((brightness+255)/5.1));
-        toolMenu.setVisibility(View.VISIBLE);
-        currentTool = 2;
-    }
-
-    private void tool3ButtonClicked(){
-        hideToolbar();
-        toolName.setText("tool3");
-        toolMenu.setVisibility(View.VISIBLE);
-        currentTool = 3;
-    }
-
-    private void tool4ButtonClicked(){
-        hideToolbar();
-        toolName.setText("tool4");
-        toolMenu.setVisibility(View.VISIBLE);
-        currentTool = 4;
+        }
     }
 
     private void themeButtonClicked(){
@@ -260,6 +278,7 @@ public class MainActivity extends AppCompatActivity {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         }
     }
+
 
     private void showToolbar(){
         toolbar.setVisibility(View.VISIBLE);
@@ -279,6 +298,40 @@ public class MainActivity extends AppCompatActivity {
         toolBarOpen = false;
     }
 
+    private void getImageFromCamera(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            if (checkSelfPermission(Manifest.permission.CAMERA) ==
+                    PackageManager.PERMISSION_DENIED ||
+                    checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+                            PackageManager.PERMISSION_DENIED){
+                //permission not enabled, request it
+                String[] permission = {Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+                //show popup to request permissions
+                requestPermissions(permission, PERMISSION_CODE);
+            }
+            else {
+                //permission already granted
+                openCamera();
+            }
+        }
+        else {
+            //system os < marshmallow
+            openCamera();
+        }
+    }
+
+    private void openCamera() {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Images.Media.TITLE, "New Picture");
+        values.put(MediaStore.Images.Media.DESCRIPTION, "From the Camera");
+        image_uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        //Camera intent
+        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, image_uri);
+        startActivityForResult(cameraIntent, IMAGE_CAPTURE_CODE);
+    }
+
+
     private void getImageFromGallery(){
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -292,10 +345,39 @@ public class MainActivity extends AppCompatActivity {
         MediaStore.Images.Media.insertImage(getContentResolver(), b,"hello", "description");
     }
 
+
+    //handling permission result
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        //this method is called, when user presses Allow or Deny from Permission Request Popup
+        switch (requestCode){
+            case PERMISSION_CODE:{
+                if (grantResults.length > 0 && grantResults[0] ==
+                        PackageManager.PERMISSION_GRANTED){
+                    //permission from popup was granted
+                    openCamera();
+                }
+                else {
+                    //permission from popup was denied
+                    Toast.makeText(this, "Permission denied...", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         //import image from gallery
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK && requestCode != GALLERY_REQUEST) {
+            Toast.makeText(this, "Image loaded", Toast.LENGTH_SHORT).show();
+
+            imageView.setImageURI(image_uri);
+            BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
+            img = new ImageFilter(drawable.getBitmap());
+            fitViewtoScreen();
+        }
 
         //Check if the intent was to pick image, was successful and an image was picked
         if(requestCode == GALLERY_REQUEST && resultCode == RESULT_OK && data != null){
@@ -303,7 +385,47 @@ public class MainActivity extends AppCompatActivity {
             //Display image on imageView
             imageView.setImageURI(data.getData());
             BitmapDrawable drawable = (BitmapDrawable) imageView.getDrawable();
-            originalImg = drawable.getBitmap();
+            img = new ImageFilter(drawable.getBitmap());
+
+            fitViewtoScreen();
         }
+
+
+    }
+
+    private void fitViewtoScreen(){
+        //scale the image to fit the screen
+
+        //height without toolbar : 650 dp
+        //height with toolbar :530dp
+        //width : 400dp
+        int hwt = 630;
+        int hwot = 730;
+        int w = 400;
+
+        int imgHeight = img.original.getHeight();
+        int imgWidth = img.original.getWidth();
+
+        float scaleY = imgHeight/ (float) dpToPx(hwot);
+        float scaleX = imgWidth/ (float)dpToPx(w);
+
+        if(scaleX < 1 || scaleY < 1) {
+            if (scaleX < scaleY) {
+                scaleX = scaleY;
+            } else {
+                scaleY = scaleX;
+            }
+
+        imageView.getLayoutParams().height = (int) (imgHeight * 1/scaleY);
+        imageView.getLayoutParams().width = (int) (imgWidth * 1/scaleX);
+
+
+        }
+
+    }
+
+    private int dpToPx(int dp) {
+        float density = getApplicationContext().getResources().getDisplayMetrics().density;
+        return Math.round((float)dp * density);
     }
 }
