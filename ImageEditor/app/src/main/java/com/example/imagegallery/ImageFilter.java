@@ -31,6 +31,14 @@ public class ImageFilter {
         onlyFilter = img;
     }
 
+    boolean imageExist(){
+        if (original == null){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
 
     public void setBrightness(float b){
         brightness = b;
@@ -45,9 +53,9 @@ public class ImageFilter {
     }
 
 
-    public void sephia(){
-        withFilter = sephiaFilter(noFilter);
-        onlyFilter = sephiaFilter(original);
+    public void sepia(){
+        withFilter = sepiaFilter(noFilter);
+        onlyFilter = sepiaFilter(original);
     }
 
     public void gray(){
@@ -55,15 +63,19 @@ public class ImageFilter {
         onlyFilter = grayScale(original);
     }
 
-    /**
-     *
-     * @param bmp input bitmap
-     * @param contrast 0..10 1 is default
-     * @param brightness -255..255 0 is default
-     * @return new bitmap
-     */
-    private Bitmap changeBitmapContrastBrightness(Bitmap bmp, float contrast, float brightness)
-    {
+    public void invert(){
+        withFilter = invertColor(noFilter);
+        onlyFilter = invertColor(original);
+    }
+
+    public void delete(){
+        withFilter = null;
+        onlyFilter = null;
+        noFilter = null;
+        original = null;
+    }
+
+    private Bitmap changeBitmapContrastBrightness(Bitmap bmp, float contrast, float brightness) {
         ColorMatrix cm = new ColorMatrix(new float[]
                 {
                         contrast, 0, 0, 0, brightness,
@@ -83,7 +95,7 @@ public class ImageFilter {
         return ret;
     }
 
-    private Bitmap sephiaFilter(Bitmap bmp){
+    private Bitmap sepiaFilter(Bitmap bmp){
         ColorMatrix cm = new ColorMatrix(new float[]
                 {
                         0.393f,   0.769f,   0.189f,   0,0,
@@ -107,6 +119,23 @@ public class ImageFilter {
                 0.33f, 0.33f, 0.33f, 0, 0,
                 0.33f, 0.33f, 0.33f, 0, 0,
                 0, 0, 0, 1, 0
+                });
+
+        Bitmap ret = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());
+        Canvas canvas = new Canvas(ret);
+        Paint paint = new Paint();
+        paint.setColorFilter(new ColorMatrixColorFilter(cm));
+        canvas.drawBitmap(bmp, 0, 0, paint);
+        return ret;
+    }
+
+    private Bitmap invertColor(Bitmap bmp){
+        ColorMatrix cm = new ColorMatrix(new float[]
+                {
+                -1,  0,  0,  0, 255,
+                 0, -1,  0,  0, 255,
+                 0,  0, -1,  0, 255,
+                 0,  0,  0,  1,   0
                 });
 
         Bitmap ret = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), bmp.getConfig());

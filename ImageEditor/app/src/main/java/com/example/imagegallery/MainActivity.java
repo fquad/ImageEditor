@@ -57,11 +57,10 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
 
     ImageFilter img = null;
 
-    Button open;
+    ImageButton open;
     Button tool;
     ImageButton save;
     ImageButton btnCamera;
-    ImageButton noFilter;
 
     Uri image_uri;
 
@@ -72,7 +71,6 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
     int filterApplied = 0;
 
     TextView toolName;
-
     SeekBar seekbar;
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -96,9 +94,9 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
         toolsIcon.add(R.drawable.ico_contrast);
         toolsIcon.add(R.drawable.ico_sepia);
         toolsIcon.add(R.drawable.ico_gray);
-        toolsIcon.add(R.drawable.ic_action_name);
-        toolsIcon.add(R.drawable.ic_action_name);
-        toolsIcon.add(R.drawable.ic_action_name);
+        toolsIcon.add(R.drawable.ico_inverted);
+        toolsIcon.add(R.drawable.ico_original);
+        toolsIcon.add(R.drawable.ico_delete);
 
         RecyclerView recyclerView = findViewById(R.id.toolsRV);
         recyclerView.setLayoutManager(new LinearLayoutManager(this,RecyclerView.HORIZONTAL,false));
@@ -115,7 +113,6 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
         open = findViewById(R.id.btn_open);
         tool = findViewById(R.id.btn_edit);
         save = findViewById(R.id.btn_save);
-        noFilter = findViewById(R.id.btn_noFilter);
         toolName = findViewById(R.id.toolName);
         btnCamera = findViewById(R.id.btn_camera);
 
@@ -129,7 +126,6 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
         open.setOnClickListener((v) -> openButtonClicked());
         tool.setOnClickListener((v) -> toolsButtonClicked());
         save.setOnClickListener((v) -> saveButtonClicked());
-        noFilter.setOnClickListener((v) -> noFilterButtonClicked());
         back.setOnClickListener((v) -> backButtonClicked());
         theme.setOnClickListener((v) -> themeButtonClicked());
 
@@ -168,9 +164,21 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
         });
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(img!= null){
+            if(filterApplied > 0) {
+                imageView.setImageBitmap(img.withFilter);
+            }else {
+                imageView.setImageBitmap(img.noFilter);
+            }
+        }
+    }
 
-
-
+    protected void onPause() {
+        super.onPause();
+    }
 
     private void saveButtonClicked(){
         saveImageToGallery();
@@ -219,53 +227,79 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
     //Recycler view Button Click event
     @Override
     public void onItemClick( int position) {
-        if(toolbar.getVisibility() == View.VISIBLE) {
-            switch (position) {
-                case 0:
-                    hideToolbar();
-                    toolName.setText("contrast");
-                    seekbar.setVisibility(View.VISIBLE);
-                    seekbar.setProgress((int) img.getContrast() * 10);
-                    currentTool = 1;
-                    toolMenu.setVisibility(View.VISIBLE);
-                    break;
-                case 1:
-                    hideToolbar();
-                    toolName.setText("brightness");
-                    seekbar.setVisibility(View.VISIBLE);
-                    seekbar.setProgress((int) ((img.getBrightness() + 255) / 5.1));
-                    currentTool = 2;
-                    toolMenu.setVisibility(View.VISIBLE);
-                    break;
-                case 2:
-                    if(filterApplied != 1) {
-                        img.sephia();
-                        imageView.setImageBitmap(img.withFilter);
-                        filterApplied = 1;
+        if( img != null) {
+            if (toolbar.getVisibility() == View.VISIBLE) {
+                switch (position) {
+                    case 0:
+                        hideToolbar();
+                        toolName.setText("contrast");
+                        seekbar.setVisibility(View.VISIBLE);
+                        seekbar.setProgress((int) img.getContrast() * 10);
+                        currentTool = 1;
+                        toolMenu.setVisibility(View.VISIBLE);
                         break;
-                    }
-                    if(filterApplied == 1){
-                        imageView.setImageBitmap(img.noFilter);
-                        filterApplied = 0;
-                    }
-                    break;
-                case 3:
-                    if(filterApplied != 2) {
-                        img.gray();
-                        imageView.setImageBitmap(img.withFilter);
-                        filterApplied = 2;
+                    case 1:
+                        hideToolbar();
+                        toolName.setText("brightness");
+                        seekbar.setVisibility(View.VISIBLE);
+                        seekbar.setProgress((int) ((img.getBrightness() + 255) / 5.1));
+                        currentTool = 2;
+                        toolMenu.setVisibility(View.VISIBLE);
                         break;
-                    }
-                    if(filterApplied == 2){
-                        imageView.setImageBitmap(img.noFilter);
-                        filterApplied = 0;
-                    }
-                    break;
-                default:
-                    currentTool = 0;
-                    break;
-            }
+                    case 2:
+                        if (filterApplied != 1) {
+                            img.sepia();
+                            imageView.setImageBitmap(img.withFilter);
+                            filterApplied = 1;
+                            break;
+                        }
+                        if (filterApplied == 1) {
+                            imageView.setImageBitmap(img.noFilter);
+                            filterApplied = 0;
+                        }
+                        break;
+                    case 3:
+                        if (filterApplied != 2) {
+                            img.gray();
+                            imageView.setImageBitmap(img.withFilter);
+                            filterApplied = 2;
+                            break;
+                        }
+                        if (filterApplied == 2) {
+                            imageView.setImageBitmap(img.noFilter);
+                            filterApplied = 0;
+                        }
+                        break;
 
+                    case 4:
+                        if (filterApplied != 3) {
+                            img.invert();
+                            imageView.setImageBitmap(img.withFilter);
+                            filterApplied = 3;
+                            break;
+                        }
+                        if (filterApplied == 3) {
+                            imageView.setImageBitmap(img.noFilter);
+                            filterApplied = 0;
+                        }
+                        break;
+
+                    case 5:
+                        noFilterButtonClicked();
+                        break;
+
+                    case 6:
+                        img = null;
+                        imageView.setImageResource(R.drawable.default_img);
+                        break;
+
+                    default:
+                        currentTool = 0;
+                        break;
+                }
+            }
+        }else{
+            Toast.makeText(this, "First import an image", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -331,7 +365,6 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
         startActivityForResult(cameraIntent, IMAGE_CAPTURE_CODE);
     }
 
-
     private void getImageFromGallery(){
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_GET_CONTENT);
@@ -340,11 +373,15 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
     }
 
     private void saveImageToGallery(){
-        imageView.setDrawingCacheEnabled(true);
-        Bitmap b = imageView.getDrawingCache();
-        MediaStore.Images.Media.insertImage(getContentResolver(), b,"hello", "description");
+        if(img != null) {
+            imageView.setDrawingCacheEnabled(true);
+            Bitmap b = imageView.getDrawingCache();
+            MediaStore.Images.Media.insertImage(getContentResolver(), b, "image", "created with ImageEditor");
+            Toast.makeText(this, "image saved", Toast.LENGTH_SHORT).show();
+        }else{
+            Toast.makeText(this, "First import an image", Toast.LENGTH_SHORT).show();
+        }
     }
-
 
     //handling permission result
     @Override
@@ -359,7 +396,7 @@ public class MainActivity extends AppCompatActivity implements ToolsRecyclerView
                 }
                 else {
                     //permission from popup was denied
-                    Toast.makeText(this, "Permission denied...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
                 }
             }
         }

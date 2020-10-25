@@ -8,8 +8,9 @@
 
     <ImageButton
         android:id="@+id/btn_tool"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginHorizontal="20dp"
         android:layout_weight="1"
         android:background="@android:color/transparent"
         android:scaleType="fitXY" />
